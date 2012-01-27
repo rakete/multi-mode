@@ -1,3 +1,4 @@
+
 (defun multi-mode-position-chunk (pos re-start re-end &optional inclusive)
   (save-excursion
     (goto-char (point-min))
@@ -45,6 +46,22 @@
                (:outer-end . ,(point-max))))
             (t nil))
       )))
+
+(defun multi-mode-mode-chunk (pos re-start re-end inside-mode outside-mode)
+  (let* ((chunk-inside (condition-case e (multi-mode-position-chunk pos re-start re-end) (error (print e))))
+         (inside-start (cdr (assoc :inner-start chunk-inside)))
+         (inside-end (cdr (assoc :inner-end chunk-inside))))
+    (if (and chunk-inside
+             inside-start
+             inside-end
+             (/= inside-start inside-end)
+             (>= pos inside-start)
+             (< pos inside-end))
+        (list inside-mode inside-start inside-end)
+      (let* ((chunk-outside (condition-case nil (multi-mode-position-chunk pos re-end re-start t) (error nil)))
+             (outside-start (cdr (assoc :outer-start chunk-outside)))
+             (outside-end (cdr (assoc :outer-end chunk-outside))))
+        (list outside-mode outside-start outside-end)))))
 
 ;; (defun multi-mode-position-inside-chunk-p (pos re-start re-end)
 ;;   (let ((chunk (condition-case nil (multi-mode-position-chunk pos re-start re-end) (error nil))))
