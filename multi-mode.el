@@ -409,16 +409,25 @@ Fontifies chunk-by-chunk within the region from START for up to
 	       (if (and (< (car chunk) beg)
 			(or (null nearest) (> (car chunk) (car nearest))))
 		   (setq nearest chunk)))
-	     (setq old-state (or ppss (cdr nearest)))
+	     (setq old-state (or (if (> emacs-major-version 23)
+                                 (syntax-ppss start)
+                               ppss) (cdr nearest)))
 	     (let ((state (parse-partial-sexp beg end nil nil old-state)))
 	       (add-to-list 'multi-ppss (cons end state)))
-
-	     (funcall
-	      ,(symbol-function 'font-lock-fontify-syntactically-region)
-	      start end loudly old-state)))
+         (if (> emacs-major-version 23)
+             (funcall
+              ,(symbol-function 'font-lock-fontify-syntactically-region)
+              start end loudly)
+           (funcall
+            ,(symbol-function 'font-lock-fontify-syntactically-region)
+            start end loudly old-state))))
+     (if (> emacs-major-version 23)
+         (funcall
+          ,(symbol-function 'font-lock-fontify-syntactically-region)
+          start end loudly)
        (funcall
-	,(symbol-function 'font-lock-fontify-syntactically-region)
-	start end loudly ppss))))
+        ,(symbol-function 'font-lock-fontify-syntactically-region)
+        start end loudly ppss)))))
 
 (defun multi-create-index ()
   "Create Imenu index alist for the currently-selected buffer.
